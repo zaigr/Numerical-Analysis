@@ -46,7 +46,7 @@ def _bernoulli_method_coefficients(polynom):
 def bernoulli_method(polynom):
     """
         Bernoulli method
-    :param polynom: ist of polynomial coefficients, 0-s index is for the biggest power and so on
+    :param polynom: list of polynomial coefficients, 0-s index is for the biggest power and so on
     :return: dict with keys 'positive' 'negative' and values - tuples with segment borders
     """
     n = list(_bernoulli_method_coefficients(polynom))
@@ -56,6 +56,57 @@ def bernoulli_method(polynom):
     segments['negative'] = - n[2], -1. / n[3]
 
     return segments
+
+
+def _lobachevsky_method_unsign_roots(func, polynom, fault):
+    """
+        Lobachevsky method for polymonial of third power
+    Variables names are the same as in the lecture
+    :param func: function object represent given polynomial
+    :param polynom: list of polynomial coefficients, 0-s index is for the biggest power and so on
+    :param fault: fault of roots computing
+    :return: tuple of three roots
+    """
+    a0, a1, a2, a3 = polynom
+    step = 1
+    while True:
+        A0 = a0 ** 2
+        A1 = a1 ** 2 - 2 * a0 * a2
+        A2 = a2 ** 2 - 2 * a1 * a3
+        A3 = a3 ** 2
+
+        x1 = (A1 / A0) ** (1. / 2 ** step)
+        x2 = (A2 / A1) ** (1. / 2 ** step)
+        x3 = (A3 / A2) ** (1. / 2 ** step)
+        step += 1
+
+        process_come_together = (func(-x1) < fault or func(x1) < fault) \
+            and (func(-x2) < fault or func(x2) < fault) and (func(-x3) < fault or func(x3) < fault)
+        if process_come_together:
+            return x1, x2, x3
+
+        a0, a1, a2, a3 = A0, A1, A2, A3
+
+
+def lobachevsky_method(func, polynom, fault):
+    """
+        Lobachevski method fot polynomial of third power
+    :param func: function object represent given polynomial
+    :param polynom: list of polynomial coefficients, 0-s index is for the biggest power and so on
+    :param fault: fault of roots computing
+    :return: tuple with three roots
+    """
+    unsign_roots = _lobachevsky_method_unsign_roots(func, polynom, fault)
+
+    # determine roots sign
+    roots = list()
+    for x in unsign_roots:
+        if func(x) < fault:
+            roots.append(x)
+        elif func(-x) < fault:
+            roots.append(-x)
+
+    return tuple(roots)
 
 
 def _function(x):
@@ -94,6 +145,10 @@ def main():
 
     print('positive: {}  to  {}'.format(*root_segments['positive']))
     print('negative: {} to {}'.format(*root_segments['negative']))
+
+    fault = 0.0001
+    roots = lobachevsky_method(_function, polynom, fault)
+    print('roots is:  {},  {},  {}'.format(*roots))
 
     plt_window.join()
 
