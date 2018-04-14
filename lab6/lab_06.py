@@ -51,7 +51,7 @@ def newton_interpolation_inverse(x, y):
         polynom_val = y[-1]
         x_product = 1
         for i in range(1, len(f)):
-            x_product *= arg - x[i - 1]
+            x_product *= arg - x[-i]
             polynom_val += f[i][-1] * x_product
         return polynom_val
 
