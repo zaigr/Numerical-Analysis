@@ -7,9 +7,47 @@
 """
 
 import json
+import bisect
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import CubicSpline
+
+
+def parabolic_spline(x_nodes, y_nodes):
+    """
+        Parabolic spline interpolation
+    :param x_nodes: interpolation nodes arguments
+    :param y_nodes: interpolation nodes values
+    :return: function, representing interpolated polynomial
+    """
+    a = y_nodes
+
+    z = [2 * (y_nodes[i + 1] - y_nodes[i]) / (x_nodes[i + 1] - x_nodes[i])
+         for i in range(len(y_nodes) - 1)]
+
+    b = [0, ] * (len(y_nodes))  # init empty list b
+    b[0] = a[0]
+    for i in range(len(y_nodes)):
+        b[i] = z[i - 1] - b[i - 1]
+
+    c = [0, ] * (len(y_nodes) - 1)
+    for i in range(len(y_nodes) - 1):
+        c[i] = (b[i + 1] - b[i]) / (2 * (x_nodes[i + 1] - x_nodes[i]))
+
+    def interpolation(x):
+        """
+            Interpolated function
+        :param x: interpolated function argument
+        :return: interpolated function value
+        """
+        insert_idx = bisect.bisect_left(x_nodes, x)
+        if x < x_nodes[insert_idx]:
+            return a[insert_idx - 1] + (x - x_nodes[insert_idx - 1]) * b[insert_idx - 1] + \
+                    + c[insert_idx - 1] * (x - x_nodes[insert_idx - 1]) ** 2
+        else:
+            return a[insert_idx]
+
+    return interpolation
 
 
 def _display_plot(x_nodes, y_nodes, x_range, y_range):
@@ -40,14 +78,10 @@ def main():
     # x_range = np.arange(x_n[0], x_n[-1], 0.01)
     # y_range = np.array([interpolation(x) for x in x_range])
 
-    cs = CubicSpline(x_n, y_n)
+    ps = parabolic_spline(x_n, y_n)
 
-    x_range = np.arange(x_n[0], x_n[-1], 0.1)
-    y_range = cs(x_range)
-
-    plt.plot(x_range, cs(x_range, 1), label="S'", linestyle='--')
-    plt.plot(x_range, cs(x_range, 2), label="S''", linestyle='--')
-    plt.plot(x_range, cs(x_range, 3), label="S'''", linestyle='--')
+    x_range = np.arange(x_n[0], x_n[-1], 0.001)
+    y_range = [ps(x) for x in x_range]
 
     _display_plot(x_n, y_n, x_range, y_range)
 
